@@ -2,14 +2,14 @@
 lightcurve
 ===============================
 
-.. image:: https://badge.fury.io/py/lightcurve.png
-    :target: http://badge.fury.io/py/lightcurve
+.. image:: https://badge.fury.io/py/pylightcurve.png
+    :target: http://badge.fury.io/py/pylightcurve
     
-.. image:: https://travis-ci.org/transientlunatic/lightcurve.png?branch=master
-        :target: https://travis-ci.org/transientlunatic/lightcurve
+.. image:: https://travis-ci.org/transientlunatic/pylightcurve.png?branch=master
+        :target: https://travis-ci.org/transientlunatic/pylightcurve
 
-.. image:: https://pypip.in/d/lightcurve/badge.png
-        :target: https://pypi.python.org/pypi/lightcurve
+.. image:: https://pypip.in/d/pylightcurve/badge.png
+        :target: https://pypi.python.org/pypi/pylightcurve
 
 
 A python package for handling (potentially multispectral) time series observation data in astronomy.
