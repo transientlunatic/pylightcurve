@@ -1,5 +1,5 @@
 ===============================
-lightcurve
+pyLightcurve
 ===============================
 
 .. image:: https://badge.fury.io/py/pylightcurve.png
