@@ -1,13 +1,15 @@
+from __future__ import absolute_import
 # -*- coding: utf-8 -*-
 
 __authors__ = ["Daniel Williams"]
 __email__ = "mail@daniel-williams.co.uk"
 
+#from __future__ import absolute_import
+
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
 import matplotlib.pyplot as pl
-from sunpy import config
 import os
 import urllib2, shutil
 import copy
@@ -15,7 +17,11 @@ from copy import deepcopy
 import matplotlib.mlab as ml
 import scipy.signal as signal
 import lightcurve
-from filters import *
+#from lightcurve import *
+from .config import load_config
+from .filters import *
+
+config = load_config()
 
 class Lightcurve():
     """
