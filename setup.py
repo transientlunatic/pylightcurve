@@ -23,7 +23,7 @@ test_requirements = [
 ]
 
 setup(
-    name='lightcurve',
+    name='pyLightcurve',
     version='0.1.0',
     description='A python package for handling (potentially multispectral) time series observation data in astronomy.',
     long_description=readme + '\n\n' + history,
@@ -31,15 +31,15 @@ setup(
     author_email='mail@daniel-williams.co.uk',
     url='https://github.com/transientlunatic/lightcurve',
     packages=[
-        'lightcurve',
+        'pylightcurve',
     ],
-    package_dir={'lightcurve':
-                 'lightcurve'},
+    package_dir={'pylightcurve':
+                 'pylightcurve'},
     include_package_data=True,
     install_requires=requirements,
     license="BSD",
     zip_safe=False,
-    keywords='lightcurve',
+    keywords='pylightcurve',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
