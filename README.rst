@@ -15,7 +15,7 @@ pyLightcurve
 A python package for handling (potentially multispectral) time series observation data in astronomy.
 
 * Free software: BSD license
-* Documentation: http://lightcurve.readthedocs.org.
+* Documentation: http://pylightcurve.readthedocs.org.
 
 Features
 --------
