@@ -32,16 +32,18 @@ class Lightcurve():
     """
 
     data = pd.DataFrame()
+    highlight = pd.DataFrame()
     meta = {}
     title = "Light Curve"
     _dcoffsets = {}
-
+    detrended = False
     def __init__(self, title="Light Curve"):
         """
         Assemble the Lightcurve.
         
         """
         self.title=title
+        self.cts = self.time_seconds()
 
     def time_seconds(self):
         """
@@ -53,16 +55,18 @@ class Lightcurve():
         ts = helper(dt)
         return ts
 
-    def add_highlight(self, data):
-        self.highlight = self.highlight.join(data, how="outer")
-        
-        return self
-        
+    
+    
     def import_data(self, data, meta):
         self.data = self.data.join(data, how="outer")
         for column in data.columns.values.tolist():
             self.meta[column] = meta[column]
             self._dcoffsets[column] = np.median(data[column])
+        
+        return self
+
+    def add_highlight(self, data):
+        self.highlight = self.highlight.join(data, how="outer")
         
         return self
     
@@ -95,7 +99,6 @@ class Lightcurve():
         position = 1
         number = 0
         for column in self.data.columns.values.tolist():
-            
             if number==0:
                 color = ax._get_lines.color_cycle
                 ccolor=next(color)
@@ -123,6 +126,7 @@ class Lightcurve():
                 axes[column].tick_params(axis='y', colors=ccolor)
                 axes[column].yaxis.grid(False, which='major')
                 position+=0.1
+
         pl.show()
         
     def _nan_buffer(self, data, size):
@@ -281,6 +285,12 @@ class Lightcurve():
                 dataw = self.nan_interp(dataw)
                 l = len(dataw)
                 sk, f = ml.psd(x=dataw, window=signal.boxcar(l), noverlap=0, NFFT=l, Fs=self.fs(), sides='onesided')
+            if self.default:
+                column = self.default
+                dataw = np.array(data[column])
+                dataw = self.nan_interp(dataw)
+                l = len(dataw)
+                sk, f = ml.psd(x=dataw, window=signal.boxcar(l), noverlap=0, NFFT=l, Fs=self.fs(), sides='onesided')
             else:
                 sk = {}
                 f = {}
@@ -371,6 +381,7 @@ class Lightcurve():
         """
         self.detrend_method=method
         self.detrend_length=nbins
+        self.detrend_nbins=nbins
         self.detrend_order=order
         self.detrend_knee=knee
 
@@ -467,6 +478,10 @@ class Lightcurve():
         for column in data.columns.values.tolist():
             self._dcoffsets[column] = np.median(data[column])
             data[column] = data[column] - self._dcoffsets[column]
+
+        if self.default:
+            self.dc = self._dcoffsets[self.default]
+            
         if "inplace" in kwargs:
             self.data = data
             return self
