@@ -42,7 +42,22 @@ class Lightcurve():
         
         """
         self.title=title
-    
+
+    def time_seconds(self):
+        """
+        Returns the time stamps of the light curve in seconds since the
+        beginning of the time series.
+        """
+        dt = (np.array(self.data.index.tolist()) - self.data.index[0].to_datetime())
+        helper = np.vectorize(lambda x: x.total_seconds())
+        ts = helper(dt)
+        return ts
+
+    def add_highlight(self, data):
+        self.highlight = self.highlight.join(data, how="outer")
+        
+        return self
+        
     def import_data(self, data, meta):
         self.data = self.data.join(data, how="outer")
         for column in data.columns.values.tolist():
