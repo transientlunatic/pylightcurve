@@ -16,7 +16,7 @@ import copy
 from copy import deepcopy
 import matplotlib.mlab as ml
 import scipy.signal as signal
-import lightcurve
+import pylightcurve
 #from lightcurve import *
 from .config import load_config
 from .filters import *
