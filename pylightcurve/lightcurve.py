@@ -20,7 +20,8 @@ import pylightcurve
 #from lightcurve import *
 from .config import load_config
 from .filters import *
-
+from dateutil import parser
+import datetime
 config = load_config()
 
 class Lightcurve():
@@ -34,16 +35,24 @@ class Lightcurve():
     data = pd.DataFrame()
     highlight = pd.DataFrame()
     meta = {}
+    tags = {}
     title = "Light Curve"
     _dcoffsets = {}
     detrended = False
+    detrend_method=None
+    
     def __init__(self, title="Light Curve"):
         """
         Assemble the Lightcurve.
         
         """
         self.title=title
-        self.cts = self.time_seconds()
+
+    def __getitem__(self, key):
+        curve = copy.deepcopy(self)
+        curve.data = curve.data[key]
+        curve.cts = curve.time_seconds()
+        return curve
 
     def time_seconds(self):
         """
@@ -55,19 +64,42 @@ class Lightcurve():
         ts = helper(dt)
         return ts
 
+    def import_tags(self, tags, name):
+        """
+        This method takes a DataFrame with tags, for example flare locations, and
+        adds them to the tag store for the lightcurve.
+
+        Parameters
+        ----------
+        tags : Pandas DataFrame
+           A Pandas DataFrame containing the tags.
+
+        name : The name of the tag category.
+        """
+
+        self.tags[name] = tags
+        return self
+
     
-    
-    def import_data(self, data, meta):
+    def import_data(self, data, meta, **kwargs):
         self.data = self.data.join(data, how="outer")
         for column in data.columns.values.tolist():
             self.meta[column] = meta[column]
             self._dcoffsets[column] = np.median(data[column])
-        
+        if "cts" in kwargs:
+            self.cts = kwargs["cts"]
+        else:
+            self.cts = self.time_seconds()
         return self
 
     def add_highlight(self, data):
         self.highlight = self.highlight.join(data, how="outer")
         
+        return self
+
+    def set_default(self, column):
+        self.clc = self.data[column]
+        self.default=column
         return self
     
     def header(self):
@@ -281,11 +313,12 @@ class Lightcurve():
             # decide if we're working on just one column, or all of them.
             if "column" in kwargs:
                 column = kwargs["column"]
+            
                 dataw = np.array(data[column])
                 dataw = self.nan_interp(dataw)
                 l = len(dataw)
                 sk, f = ml.psd(x=dataw, window=signal.boxcar(l), noverlap=0, NFFT=l, Fs=self.fs(), sides='onesided')
-            if self.default:
+            elif self.default:
                 column = self.default
                 dataw = np.array(data[column])
                 dataw = self.nan_interp(dataw)
@@ -303,6 +336,13 @@ class Lightcurve():
         # return power spectral density and array of frequencies
         return sk, f
 
+    def time_to_index(self, time):
+      """
+      Returns the index location which corresponds to a given time.
+      """
+      
+      return self.data.index.searchsorted(parser.parse(time))
+
     def dt(self):
         """
         Calculate the sample separation for the light curve.
@@ -312,7 +352,10 @@ class Lightcurve():
         float
            The separation time for data in the light curve.
         """
-        return (self.data.index[1] - self.data.index[0] ).seconds
+        if isinstance(self.data.index, datetime.datetime):
+            return (self.data.index[1] - self.data.index[0] ).seconds
+        else:
+            return (self.data.index[1] - self.data.index[0])
 
     def fs(self):
         """
