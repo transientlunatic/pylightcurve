@@ -297,6 +297,9 @@ class Lightcurve():
         ----------
         column : str, optional
            The column of the lightcurve which should be analysed.
+        reduced: float, optional
+           Removes sections of the array greater than its value times the mean
+           of the array, in order to try and reduce the effect of very large events.
 
         Returns
         -------
@@ -306,22 +309,34 @@ class Lightcurve():
            An array of the frequencies.
         """
 
-        data = self.data
+        data = deepcopy(self.data)
         
         if isinstance(data, pd.core.frame.DataFrame):
             # If the supplied data is a pandas DataFrame we'll need to
             # decide if we're working on just one column, or all of them.
             if "column" in kwargs:
                 column = kwargs["column"]
-            
+
                 dataw = np.array(data[column])
                 dataw = self.nan_interp(dataw)
+
+                if "reduced" in kwargs and kwargs["reduced"] != None:
+                    reduced = kwargs["reduced"]
+                    mean = np.mean(dataw)
+                    std = np.std(dataw)
+                    np.delete(dataw,[dataw>mean+reduced*std])
+                
                 l = len(dataw)
                 sk, f = ml.psd(x=dataw, window=signal.boxcar(l), noverlap=0, NFFT=l, Fs=self.fs(), sides='onesided')
             elif self.default:
                 column = self.default
                 dataw = np.array(data[column])
                 dataw = self.nan_interp(dataw)
+                if "reduced" in kwargs and kwargs["reduced"] != None:
+                    reduced = kwargs["reduced"]
+                    mean = np.mean(dataw)
+                    std = np.std(dataw)
+                    dataw[dataw>mean+reduced*std]=mean
                 l = len(dataw)
                 sk, f = ml.psd(x=dataw, window=signal.boxcar(l), noverlap=0, NFFT=l, Fs=self.fs(), sides='onesided')
             else:
@@ -330,10 +345,16 @@ class Lightcurve():
                 for column in data.columns.values.tolist():
                     dataw = np.array(data[column])
                     dataw = self.nan_interp(dataw)
+                    if "reduced" in kwargs and kwargs["reduced"] != None:
+                        reduced = kwargs["reduced"]
+                        mean = np.mean(dataw)
+                        std = np.std(dataw)
+                        dataw[dataw>mean+reduced*std]=mean
                     l = len(dataw)
                     sk[column], f[column] = ml.psd(x=dataw, window=signal.boxcar(l), noverlap=0, NFFT=l, Fs=self.fs(), sides='onesided')
 
         # return power spectral density and array of frequencies
+        del data
         return sk, f
 
     def time_to_index(self, time):
@@ -352,7 +373,7 @@ class Lightcurve():
         float
            The separation time for data in the light curve.
         """
-        if isinstance(self.data.index, datetime.datetime):
+        if isinstance(self.data.index[0], pd.tslib.Timestamp):
             return (self.data.index[1] - self.data.index[0] ).seconds
         else:
             return (self.data.index[1] - self.data.index[0])
