@@ -392,6 +392,8 @@ class Lightcurve():
     def nan_interp(self, data):
         nans, x= self._nan_helper(data)
         data = copy.deepcopy(data)
+        if np.count_nonzero(~np.isnan(data)) == 0:
+            return data
         data[nans]= np.interp(x(nans), x(~nans), data[~nans])
         return data
 
@@ -599,6 +601,8 @@ class Lightcurve():
             for column in data.columns.values.tolist():
                 z = data[column]
                 nans, za= self._nan_helper(z)
+
+                    
                 z[nans]= np.interp(za(nans), za(~nans), z[~nans]).astype('float32')
                 data[column] = z
         if "inplace" in kwargs:
