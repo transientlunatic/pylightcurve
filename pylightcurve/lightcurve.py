@@ -599,6 +599,9 @@ class Lightcurve():
             for column in data.columns.values.tolist():
                 z = data[column]
                 nans, za= self._nan_helper(z)
+                if np.count_nonzero(~np.isnan(z)) == 0:
+                    continue
+                    
                 z[nans]= np.interp(za(nans), za(~nans), z[~nans]).astype('float32')
                 data[column] = z
         if "inplace" in kwargs:
