@@ -40,6 +40,7 @@ class Lightcurve():
     _dcoffsets = {}
     detrended = False
     detrend_method=None
+    colors = {}
     
     def __init__(self, title="Light Curve"):
         """
@@ -54,6 +55,9 @@ class Lightcurve():
         curve.cts = curve.time_seconds()
         return curve
 
+    def _set_colors_(self, colors):
+        self.colors = colors
+        
     def time_seconds(self):
         """
         Returns the time stamps of the light curve in seconds since the
@@ -114,15 +118,19 @@ class Lightcurve():
     def update_title(self, title):
         self.title = title
         
-    def peek(self):
+    def peek(self, **kwargs):
         """
         This method produces a plot of the data contained within the lightcurve
         object, with appropriate scaling. This method is suitable for glancing at
         the data, but is unsuitable for production or publication quality output.
 
-        
         """
         #self.data = self.data.fillna(method='pad')
+
+        # We may need some specific colours in order to stick with
+        # conventions, e.g. red for thermal emission in GOES Solar
+        # data.
+       
         
         # Create the underlying plot
         fig, ax = pl.subplots(figsize=(18,6))
@@ -132,8 +140,12 @@ class Lightcurve():
         number = 0
         for column in self.data.columns.values.tolist():
             if number==0:
-                color = ax._get_lines.color_cycle
-                ccolor=next(color)
+                if column in self.colors:
+                    ccolor = self.colors[column]
+                else:
+                    color = ax._get_lines.color_cycle
+                    ccolor=next(color)
+                    
                 axes[column] = ax
                 axes[column].set_ylabel(column, color=ccolor)
                 axes[column].tick_params(axis='y', colors=ccolor)
@@ -151,8 +163,11 @@ class Lightcurve():
                 axes[column].set_frame_on(True)
                 axes[column].patch.set_visible(False)
                 
-                color = ax._get_lines.color_cycle
-                ccolor=next(color)
+                if column in self.colors:
+                    ccolor = self.colors[column]
+                else:
+                    color = ax._get_lines.color_cycle
+                    ccolor=next(color)
                 self.data[column].plot(ax=axes[column], color=ccolor)
                 axes[column].set_ylabel(column, color=ccolor)
                 axes[column].tick_params(axis='y', colors=ccolor)
