@@ -41,6 +41,7 @@ class Lightcurve():
     detrended = False
     detrend_method=None
     colors = {}
+    plot_log = {}
     
     def __init__(self, title="Light Curve"):
         """
@@ -147,6 +148,11 @@ class Lightcurve():
                     ccolor=next(color)
                     
                 axes[column] = ax
+
+                if column in self.plot_log:
+                    if self.plot_log[column]:
+                        axes[column].set_yscale('log')
+
                 axes[column].set_ylabel(column, color=ccolor)
                 axes[column].tick_params(axis='y', colors=ccolor)
                 self.data[column].plot(ax=axes[column], color=ccolor)
@@ -168,6 +174,11 @@ class Lightcurve():
                 else:
                     color = ax._get_lines.color_cycle
                     ccolor=next(color)
+
+                if column in self.plot_log:
+                    if self.plot_log[column]:
+                        axes[column].set_yscale('log')
+                        
                 self.data[column].plot(ax=axes[column], color=ccolor)
                 axes[column].set_ylabel(column, color=ccolor)
                 axes[column].tick_params(axis='y', colors=ccolor)
@@ -175,6 +186,7 @@ class Lightcurve():
                 position+=0.1
 
         pl.show()
+        return fig, ax
         
     def _nan_buffer(self, data, size):
         """
