@@ -52,7 +52,13 @@ class Lightcurve():
 
     def __getitem__(self, key):
         curve = copy.deepcopy(self)
+        print key, type(key)
+        if isinstance(key, slice):
+            key[0] = self.time_to_index(key[0])
+            key[1] = self.time_to_index(key[1])
+            print "Slice"
         curve.data = curve.data[key]
+        #print key[0]
         curve.cts = curve.time_seconds()
         return curve
 
@@ -64,7 +70,11 @@ class Lightcurve():
         Returns the time stamps of the light curve in seconds since the
         beginning of the time series.
         """
-        dt = (np.array(self.data.index.tolist()) - self.data.index[0].to_datetime())
+        try:
+            dt = (np.array(self.data.index.tolist()) - self.data.index[0].to_datetime())
+        except IndexError:
+            print self.data
+            return [0]
         helper = np.vectorize(lambda x: x.total_seconds())
         ts = helper(dt)
         return ts
