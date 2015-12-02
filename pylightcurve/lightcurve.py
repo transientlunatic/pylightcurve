@@ -8,6 +8,7 @@ __email__ = "mail@daniel-williams.co.uk"
 
 import numpy as np
 import pandas as pd
+import scipy
 from pandas import DataFrame
 import matplotlib.pyplot as pl
 import os
@@ -70,6 +71,8 @@ class Lightcurve():
         Returns the time stamps of the light curve in seconds since the
         beginning of the time series.
         """
+        if self.data.index[0].format == 'gps':
+            
         try:
             dt = (np.array(self.data.index.tolist()) - self.data.index[0].to_datetime())
         except IndexError:
@@ -105,7 +108,7 @@ class Lightcurve():
             self.cts = kwargs["cts"]
         else:
             self.cts = self.time_seconds()
-        return self
+        return selfec
 
     def add_highlight(self, data):
         self.highlight = self.highlight.join(data, how="outer")
@@ -232,6 +235,14 @@ class Lightcurve():
                 data[end : end+this_size] = np.nan
                     
         return data
+
+
+    def downsample(self, rate):
+        R = rate
+        pad_size = np.ceil(float(self.data.size)/R)*R - self.data.size
+        data_padded = np.append(self.data, np.zeros(pad_size)*np.NaN)
+        data_m = scipy.nanmean(data_padded.reshape(-1,R), axis=1)
+        return data_m
         
     def gap_smooth(self, size, **kwargs):
         """
