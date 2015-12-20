@@ -71,7 +71,7 @@ class Lightcurve():
         Returns the time stamps of the light curve in seconds since the
         beginning of the time series.
         """
-        if self.data.index[0].format == 'gps':
+        #if self.data.index[0].format == 'gps':
             
         try:
             dt = (np.array(self.data.index.tolist()) - self.data.index[0].to_datetime())
@@ -103,12 +103,12 @@ class Lightcurve():
         self.data = self.data.join(data, how="outer")
         for column in data.columns.values.tolist():
             self.meta[column] = meta[column]
-            self._dcoffsets[column] = np.median(data[column])
+            self._dcoffsets[column] = np.nanmedian(data[column])
         if "cts" in kwargs:
             self.cts = kwargs["cts"]
         else:
             self.cts = self.time_seconds()
-        return selfec
+        return self
 
     def add_highlight(self, data):
         self.highlight = self.highlight.join(data, how="outer")
@@ -157,8 +157,8 @@ class Lightcurve():
                 if column in self.colors:
                     ccolor = self.colors[column]
                 else:
-                    color = ax._get_lines.color_cycle
-                    ccolor=next(color)
+                    #color = ax._get_lines.color_cycle
+                    ccolor='blue'#next(color)
                     
                 axes[column] = ax
 
@@ -185,8 +185,8 @@ class Lightcurve():
                 if column in self.colors:
                     ccolor = self.colors[column]
                 else:
-                    color = ax._get_lines.color_cycle
-                    ccolor=next(color)
+                    #color = ax._get_lines.color_cycle
+                    ccolor='blue'#next(color)
 
                 if column in self.plot_log:
                     if self.plot_log[column]:
@@ -470,7 +470,7 @@ class Lightcurve():
         if data == None:
             data = self.clc
             
-        self.dc  = np.median(data)
+        self.dc  = np.nanmedian(data)
         data = data - self.dc
         return data
 
@@ -590,7 +590,7 @@ class Lightcurve():
         new_object = deepcopy(self)
         data = new_object.data
         for column in data.columns.values.tolist():
-            self._dcoffsets[column] = np.median(data[column])
+            self._dcoffsets[column] = np.nanmedian(data[column])
             data[column] = data[column] - self._dcoffsets[column]
 
         if self.default:
