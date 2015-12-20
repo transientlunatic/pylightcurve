@@ -8,6 +8,7 @@ __email__ = "mail@daniel-williams.co.uk"
 
 import numpy as np
 import pandas as pd
+import scipy
 from pandas import DataFrame
 import matplotlib.pyplot as pl
 import os
@@ -72,6 +73,8 @@ class Lightcurve():
         Returns the time stamps of the light curve in seconds since the
         beginning of the time series.
         """
+        #if self.data.index[0].format == 'gps':
+            
         try:
             dt = (np.array(self.data.index.tolist()) - self.data.index[0].to_datetime())
         except IndexError:
@@ -102,7 +105,7 @@ class Lightcurve():
         self.data = self.data.join(data, how="outer")
         for column in data.columns.values.tolist():
             self.meta[column] = meta[column]
-            self._dcoffsets[column] = np.median(data[column])
+            self._dcoffsets[column] = np.nanmedian(data[column])
         if "cts" in kwargs:
             self.cts = kwargs["cts"]
         else:
@@ -157,7 +160,7 @@ class Lightcurve():
                     ccolor = self.colors[column]
                 else:
                     ccolor=next(self.color_cycle)
-                    
+
                 axes[column] = ax
 
                 if column in self.plot_log:
@@ -184,7 +187,6 @@ class Lightcurve():
                     ccolor = self.colors[column]
                 else:
                     ccolor=next(self.color_cycle)
-
                 if column in self.plot_log:
                     if self.plot_log[column]:
                         axes[column].set_yscale('log')
@@ -232,6 +234,14 @@ class Lightcurve():
                 data[end : end+this_size] = np.nan
                     
         return data
+
+
+    def downsample(self, rate):
+        R = rate
+        pad_size = np.ceil(float(self.data.size)/R)*R - self.data.size
+        data_padded = np.append(self.data, np.zeros(pad_size)*np.NaN)
+        data_m = scipy.nanmean(data_padded.reshape(-1,R), axis=1)
+        return data_m
         
     def gap_smooth(self, size, **kwargs):
         """
@@ -459,7 +469,7 @@ class Lightcurve():
         if data == None:
             data = self.clc
             
-        self.dc  = np.median(data)
+        self.dc  = np.nanmedian(data)
         data = data - self.dc
         return data
 
@@ -607,7 +617,7 @@ class Lightcurve():
         new_object = deepcopy(self)
         data = new_object.data
         for column in data.columns.values.tolist():
-            self._dcoffsets[column] = np.median(data[column])
+            self._dcoffsets[column] = np.nanmedian(data[column])
             data[column] = data[column] - self._dcoffsets[column]
 
         if self.default:
