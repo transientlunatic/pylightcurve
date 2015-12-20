@@ -108,6 +108,30 @@ def running_median(y, window):
 
     return ffit
 
+def median_filter(y, window):
+    """A method to subtract a median-filtered signal from the original
+    signal using the scipy implementaiton of a median filter.
+
+    Parameters
+    ----------
+    y : :class:`numpy.ndarray`
+       A 1-dimensional array containing the data time series.
+    window : int
+       An (odd) integer defining the length, in samples, of the filter window.
+
+    Returns
+    -------
+    class:`numpy.ndarray`
+       A 1-dimensional array of data with the median removed.
+    """
+    if not window % 2 == 1:
+        window += 1
+
+    # Calculate the median filter
+    filt = signal.medfilt(y, window)
+        
+    return y - filt
+
 def highpass_filter_lightcurve(lightcurve, knee=(1./(0.3*86400.)), **kwargs):
     """
     Detrends a light curve by high-pass filtering it using a third order Butterworth
@@ -154,3 +178,73 @@ def highpass_filter_lightcurve(lightcurve, knee=(1./(0.3*86400.)), **kwargs):
     y = signal.lfilter(b, a, zd)
     z = y[np.floor(len(y)/2):]
     return z
+
+def medfilt1(x=None,L=None):
+
+    '''
+    A simple median filter for 1d numpy arrays.
+    Designed to be a replica of the medfilt1 function in MATLAB.
+
+    performs a discrete one-dimensional median filter with window
+    length L to input vector x. produces a vector the same size 
+    as x. boundaries handled by shrinking L at edges; no data
+    outside of x used in producing the median filtered output.
+    (upon error or exception, returns None.)
+
+    inputs:
+        x, Python 1d list or tuple or Numpy array
+        L, median filter window length
+    output:
+        xout, Numpy 1d array of median filtered result; same size as x
+    
+    bdj, 5-jun-2009
+    '''
+
+    # input checks and adjustments --------------------------------------------
+    try:
+        N = len(x)
+        if N < 2:
+            print 'Error: input sequence too short: length =',N
+            return None
+        elif L < 2:
+            print 'Error: input filter window length too short: L =',L
+            return None
+        elif L > N:
+            print 'Error: input filter window length too long: L = %d, len(x) = %d'%(L,N)
+            return None
+    except:
+        print 'Exception: input data must be a sequence'
+        return None
+
+    xin = np.array(x)
+    if xin.ndim != 1:
+        print 'Error: input sequence has to be 1d: ndim =',xin.ndim
+        return None
+    
+    xout = np.zeros(xin.size)
+
+    # ensure L is odd integer so median requires no interpolation
+    L = int(L)
+    if L%2 == 0: # if even, make odd
+        L += 1 
+    else: # already odd
+        pass 
+    Lwing = (L-1)/2
+
+    # body --------------------------------------------------------------------
+
+    for i,xi in enumerate(xin):
+  
+        # left boundary (Lwing terms)
+        if i < Lwing:
+            xout[i] = np.median(xin[0:i+Lwing+1]) # (0 to i+Lwing)
+
+        # right boundary (Lwing terms)
+        elif i >= N - Lwing:
+            xout[i] = np.median(xin[i-Lwing:N]) # (i-Lwing to N-1)
+            
+        # middle (N - 2*Lwing terms; input vector and filter window overlap completely)
+        else:
+            xout[i] = np.median(xin[i-Lwing:i+Lwing+1]) # (i-Lwing to i+Lwing)
+
+    return xout

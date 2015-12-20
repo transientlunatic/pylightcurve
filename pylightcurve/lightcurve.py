@@ -42,6 +42,8 @@ class Lightcurve():
     detrend_method=None
     colors = {}
     plot_log = {}
+
+    color_cycle = iter('049CDB', '46A546', '9D261D', 'F89406', 'FFC40D', 'F89406')
     
     def __init__(self, title="Light Curve"):
         """
@@ -154,8 +156,7 @@ class Lightcurve():
                 if column in self.colors:
                     ccolor = self.colors[column]
                 else:
-                    color = ax._get_lines.color_cycle
-                    ccolor=next(color)
+                    ccolor=next(self.color_cycle)
                     
                 axes[column] = ax
 
@@ -182,8 +183,7 @@ class Lightcurve():
                 if column in self.colors:
                     ccolor = self.colors[column]
                 else:
-                    color = ax._get_lines.color_cycle
-                    ccolor=next(color)
+                    ccolor=next(self.color_cycle)
 
                 if column in self.plot_log:
                     if self.plot_log[column]:
@@ -470,7 +470,7 @@ class Lightcurve():
         Parameters
         ----------
         method : string
-           The detrending method. Can be 'savitzkygolay', 'runningmedian', or,
+           The detrending method. Can be 'savitzkygolay', 'runningmedian', 'medianfilter', or,
            'highpassfilter'.
         nbins : int
            The length of the detrending window, in bins.
@@ -488,7 +488,7 @@ class Lightcurve():
         self.detrend_order=order
         self.detrend_knee=knee
 
-    def detrend(self, method='none', nbins=None, order=None, knee=None, **kwargs):
+    def detrend(self, method='none', nbins=None, order=None, knee=None, save=None,**kwargs):
         """
         A method to detrend the light curve using a Savitsky-Golay filter (:func:`.savitzky_golay`),
         a running median filter (:func:`.running_median`), or a high-pass filter
@@ -497,10 +497,10 @@ class Lightcurve():
         Parameters
         ----------
         method : string, default: 'none'
-           The detrending method. Either 'savitzkygolay', 'runningmedian', or
+           The detrending method. Either 'savitzkygolay', 'runningmedian', 'medianfilter' or
            'highpassfilter'.
         nbins : int, default: None
-           The number of bins in the Savitsky-Golay, or running median detrend window
+           The number of bins in the Savitsky-Golay, median filter, or running median detrend window
         order : int, default: None
            The polynomial order of the Savitsky-Golay detrending fit.
         knee : float, default: None
@@ -540,6 +540,25 @@ class Lightcurve():
             ffit = running_median(dataw, nbins)
             dataw = (dataw - ffit)
             dataw[nans] = np.nan
+        elif method == 'medianfilter':
+            if nbins is None:
+                raise ValueError("Number of bins for median filter not set")
+            nans, stuff = self._nan_helper(dataw)
+            dataw = self.nan_interp(dataw)
+            ffit = median_filter(dataw, nbins)
+            dataw = (dataw - ffit)
+            dataw[nans] = np.nan
+
+        elif method == 'medfilt1':
+            if nbins is None:
+                raise ValueError("Number of bins for median filter not set")
+            if not nbins % 2 == 1:
+                nbins += 1
+            nans, stuff = self._nan_helper(dataw)
+            dataw = self.nan_interp(dataw)
+            ffit = medfilt1(dataw, nbins)
+            dataw = (dataw - ffit)
+            dataw[nans] = np.nan
             
         elif method == 'highpassfilter':
             if knee is None:
@@ -557,14 +576,23 @@ class Lightcurve():
             column = kwargs['column']
             data[column]= dataw
         else:
-            new_object.clc = dataw
+            if self.default:
+                new_object.data[self.default] = dataw
+            else:
+                new_object.clc = dataw
+
+        if save:
+            dataw.save(save)
             
         if "inplace" in kwargs:
             self.clc = dataw
+            if self.default:
+                self.data[self.default] = dataw
             self.data = data
             return self
         else:
-            return new_object.denorm()
+            return new_object
+
 
     def norm(self, **kwargs):
         """
